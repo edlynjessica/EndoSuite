@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EndoSuite | Patient Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .slider-track {
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+            touch-action: none;
+            user-select: none;
+            position: relative;
+        }
+        .slider-thumb { 
+            transition: transform 0.1s ease;
+            touch-action: none;
+            position: absolute;
+            top: 4px; left: 4px;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-texture { background-image: radial-gradient(#334155 0.5px, transparent 0.5px); background-size: 16px 16px; }
+        .branding-texture { background-image: radial-gradient(#bae6fd 0.5px, transparent 0.5px); background-size: 16px 16px; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        .clinical-glow-complete { background: #ecfdf5; border: 1px solid #a7f3d0; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.15); color: #065f46; }
+        .clinical-glow-pending { background: #fefce8; border: 1px solid #fde68a; box-shadow: 0 4px 15px rgba(234, 179, 8, 0.15); color: #854d0e; }
+        .clinical-glow-incomplete { background: #fff7ed; border: 1px solid #fed7aa; box-shadow: 0 4px 15px rgba(249, 115, 22, 0.15); color: #991b1b; }
+        .clinical-glow-bin { background: #fef2f2; border: 1px solid #fecaca; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.15); color: #991b1b; }
+    </style>
+</head>
+<body class="bg-blue-50 min-h-screen">
+
+    <div id="login-screen" class="fixed inset-0 bg-slate-900 sidebar-texture flex items-center justify-center z-[200]">
+        <div class="bg-white p-10 rounded-3xl shadow-2xl w-full max-w-sm">
+            <div class="flex flex-col items-center mb-8">
+                <div class="text-sky-600 mb-4"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M20 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M12 17v-4"/><path d="M12 9V5"/><path d="M9 13H5"/><path d="M19 13h-4"/><path d="M12 9a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/></svg></div>
+                <h1 class="text-2xl font-bold text-slate-900">Welcome Back</h1>
+                <p class="text-slate-500 text-sm">Please login to EndoSuite</p>
+            </div>
+            <input type="text" placeholder="Username" class="w-full p-3 mb-4 border rounded-xl bg-slate-50">
+            <input type="password" placeholder="Password" class="w-full p-3 mb-6 border rounded-xl bg-slate-50">
+            <button onclick="document.getElementById('login-screen').classList.add('hidden')" class="w-full bg-sky-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-sky-700 transition-all">Login</button>
+        </div>
+    </div>
+
+    <div id="app-container" class="flex min-h-screen">
+        <nav class="w-64 bg-slate-900 sidebar-texture text-slate-400 p-6 flex flex-col justify-between shadow-2xl h-screen sticky top-0">
+            <div>
+                <div class="text-xs font-bold text-sky-300 uppercase tracking-widest text-center mb-10">City Endoscopy</div>
+                <ul class="space-y-2">
+                    <li onclick="switchTab('Dashboard')" id="tab-Dashboard" class="p-4 rounded-xl bg-sky-600/10 text-sky-400 border border-sky-600/20 flex items-center gap-3 cursor-pointer transition-all hover:bg-sky-600/10 hover:text-sky-400">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+                        <span class="font-medium">Dashboard</span>
+                    </li>
+                    <li onclick="switchTab('Templates')" id="tab-Templates" class="p-4 rounded-xl text-slate-400 hover:bg-sky-600/10 hover:text-sky-400 flex items-center gap-3 cursor-pointer transition-all">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <span class="font-medium">Templates</span>
+                    </li>
+                    <li onclick="switchTab('Medicines')" id="tab-Medicines" class="p-4 rounded-xl text-slate-400 hover:bg-sky-600/10 hover:text-sky-400 flex items-center gap-3 cursor-pointer transition-all">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="10"/></svg>
+                        <span class="font-medium">Medicines</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="relative">
+                    <div onclick="toggleProfileMenu()" class="p-4 rounded-xl bg-slate-800 cursor-pointer flex items-center gap-3 text-white border border-slate-700 hover:bg-slate-700 transition-all">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-sky-400"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        <div><p class="text-xs font-bold text-white">Dr. Admin</p></div>
+                    </div>
+                    <div id="profileMenu" class="hidden absolute bottom-20 left-0 w-full bg-slate-800 rounded-xl border border-slate-700 p-2 shadow-2xl">
+                        <button class="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 rounded-lg">Settings</button>
+                        <button onclick="signout()" class="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-slate-700 rounded-lg">Signout</button>
+                    </div>
+                </div>
+                <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 text-center text-xs font-mono text-sky-300" id="live-time">Loading date...</div>
+            </div>
+        </nav>
+
+        <main class="flex-1 p-10 overflow-y-auto">
+            <div id="content-Dashboard" class="space-y-8 max-w-[1200px] mx-auto">
+                <div class="flex justify-between items-center pb-6">
+                    <h2 class="text-3xl font-bold text-slate-900 tracking-tight">Patient Dashboard</h2>
+                    <div class="flex items-center gap-3">
+                        <button onclick="toggleModal(true)" class="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-semibold text-sm shadow-lg transition-all flex items-center gap-2">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                            Register Patient
+                        </button>
+                        <button class="bg-sky-600 text-white rounded-full font-semibold text-xs shadow-lg transition-all hover:bg-sky-700 flex items-center gap-2 px-4 py-2">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Quick procedure
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-sky-50 p-8 rounded-3xl border border-sky-100 shadow-inner">
+                    <div class="grid grid-cols-6 gap-4 px-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest pb-4">
+                        <div>MRN</div><div>Patient / Ref ID</div><div>Age / Gender</div><div>Mobile</div><div>Last Procedure</div><div class="text-right">Action</div>
+                    </div>
+                    <div id="patientList" class="space-y-4"></div>
+                </div>
+            </div>
+
+            <div id="content-Templates" class="hidden max-w-[1200px] mx-auto">
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="text-3xl font-bold text-slate-900 tracking-tight">Report Templates</h2>
+                    <button class="bg-sky-600 hover:bg-sky-700 text-white p-3 rounded-full shadow-lg transition-all flex items-center gap-2">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                    </button>
+                </div>
+                <div class="grid grid-cols-3 gap-6">
+                    <div onclick="openFullScreenTemplate('Standard')" class="group relative bg-white p-6 rounded-2xl shadow-sm border border-slate-200 cursor-pointer hover:border-sky-400 hover:shadow-[0_0_20px_rgba(2,132,199,0.2)] transition-all">
+                        <span class="absolute top-4 right-4 text-[10px] font-bold text-sky-600 bg-sky-50 px-2 py-1 rounded">PREBUILT</span>
+                        <h3 class="font-bold text-slate-900">Standard Endoscopy</h3>
+                        <p class="text-sm text-slate-500 mt-2">Default report structure.</p>
+                    </div>
+                    <div onclick="openFullScreenTemplate('Colonoscopy')" class="group relative bg-white p-6 rounded-2xl shadow-sm border border-slate-200 cursor-pointer hover:border-sky-400 hover:shadow-[0_0_20px_rgba(2,132,199,0.2)] transition-all">
+                        <span class="absolute top-4 right-4 text-[10px] font-bold text-sky-600 bg-sky-50 px-2 py-1 rounded">PREBUILT</span>
+                        <h3 class="font-bold text-slate-900">Colonoscopy Protocol</h3>
+                        <p class="text-sm text-slate-500 mt-2">Screening and polyp reporting.</p>
+                    </div>
+                    <div onclick="openFullScreenTemplate('Biopsy')" class="group relative bg-white p-6 rounded-2xl shadow-sm border border-slate-200 cursor-pointer hover:border-sky-400 hover:shadow-[0_0_20px_rgba(2,132,199,0.2)] transition-all">
+                        <span class="absolute top-4 right-4 text-[10px] font-bold text-sky-600 bg-sky-50 px-2 py-1 rounded">PREBUILT</span>
+                        <h3 class="font-bold text-slate-900">Biopsy Path Report</h3>
+                        <p class="text-sm text-slate-500 mt-2">Tissue analysis template.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="content-Medicines" class="hidden max-w-[1200px] mx-auto">
+                <h2 class="text-3xl font-bold text-slate-900 tracking-tight mb-8">Medicines Catalog</h2>
+                <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+                    <p class="text-slate-500 text-center">Medicines module coming soon...</p>
+                </div>
+            </div>
+            
+            <div id="fullScreenTemplate" class="hidden fixed inset-0 bg-white z-[100] p-10 overflow-y-auto">
+                <div class="max-w-4xl mx-auto bg-white rounded-3xl p-12 min-h-full relative shadow-2xl border border-slate-100">
+                    <button onclick="closeFullScreenTemplate()" class="absolute top-8 left-8 text-slate-400 hover:text-slate-600">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                    </button>
+                    <button class="absolute top-8 right-8 text-slate-400 hover:text-sky-600 transition-colors">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <h2 id="fsTemplateTitle" class="text-3xl font-bold text-slate-900 mb-8 mt-4 text-center">Template Name</h2>
+                    <div id="fsTemplateContent" class="text-slate-700 whitespace-pre-line bg-slate-50 p-12 rounded-2xl border border-slate-100 font-serif leading-relaxed"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="regModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <form id="regForm" class="bg-sky-50 branding-texture rounded-2xl p-8 w-full max-w-2xl shadow-2xl relative border border-sky-100 flex flex-col">
+            <h3 class="text-xl font-bold mb-6 text-slate-900">Register New Patient</h3>
+            <button type="button" onclick="checkClose()" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+            <div class="grid grid-cols-2 gap-4 mb-8">
+                <input required type="text" placeholder="MRN *" name="mrn" class="p-3 border rounded-xl bg-white/50 text-sm">
+                <input required type="text" placeholder="Full Name *" name="name" class="p-3 border rounded-xl bg-white/50 text-sm">
+                <input required type="text" placeholder="ABHA ID *" name="abhaId" class="p-3 border rounded-xl bg-white/50 text-sm">
+                <input required type="text" placeholder="Ref ID *" name="refId" class="p-3 border rounded-xl bg-white/50 text-sm">
+                <input required type="number" placeholder="Age *" name="age" class="p-3 border rounded-xl bg-white/50 text-sm">
+                <select required name="gender" class="p-3 border rounded-xl bg-white/50 text-sm text-slate-500">
+                    <option value="" disabled selected>Gender *</option>
+                    <option value="Male">Male</option><option value="Female">Female</option>
+                </select>
+                <div class="flex gap-2 col-span-2">
+                    <select class="p-3 border rounded-xl w-24 bg-white/50 text-sm">
+                        <option value="+91">+91 (IN)</option><option value="+1">+1 (US)</option>
+                    </select>
+                    <input required type="tel" placeholder="Mobile *" name="mobile" class="p-3 border rounded-xl flex-1 bg-white/50 text-sm">
+                </div>
+                <input type="email" placeholder="Email" name="email" class="p-3 border rounded-xl col-span-2 bg-white/50 text-sm">
+                <input type="text" placeholder="Address" name="address" class="p-3 border rounded-xl col-span-2 bg-white/50 text-sm">
+                <input type="text" placeholder="Physician" name="physician" class="p-3 border rounded-xl col-span-2 bg-white/50 text-sm">
+            </div>
+            <div class="flex gap-4">
+                <button type="button" onclick="checkClose()" class="flex-1 py-3 text-slate-500 font-semibold hover:text-slate-900">Cancel</button>
+                <button type="submit" class="flex-1 py-3 bg-sky-600 text-white rounded-xl font-semibold shadow-lg hover:bg-sky-700 transition-all">Register</button>
+            </div>
+        </form>
+    </div>
+
+    <div id="confirmModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
+        <div class="bg-white rounded-xl p-6 shadow-2xl w-full max-w-xs">
+            <h3 class="font-bold mb-4">Do you want to discard changes?</h3>
+            <div class="flex gap-3">
+                <button onclick="closeConfirm(true)" class="flex-1 bg-red-500 text-white py-2 rounded-lg font-semibold">Yes</button>
+                <button onclick="closeConfirm(false)" class="flex-1 bg-slate-200 py-2 rounded-lg font-semibold">No</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let patients = [
+            { id: 1, name: "John Doe", mrn: "88231", refId: "ABHA-992-123", abhaId: "AB-123-456", age: 45, gender: "Male", mobile: "+91 9876543210", email: "john.doe@email.com", address: "123 Maple St, NY", physician: "Dr. Smith", activeTab: 'Complete', procedures: [
+                {date: "2026-06-20", type: "Colonoscopy", images: 12, videos: 2, status: "Complete"},
+            ]},
+            { id: 2, name: "Jane Smith", mrn: "99120", refId: "ABHA-110-445", abhaId: "AB-789-012", age: 32, gender: "Female", mobile: "+1 555-0102", email: "jane.s@email.com", address: "456 Oak Ave, CA", physician: "Dr. Jones", activeTab: 'Complete', procedures: [] },
+            { id: 3, name: "Alice Johnson", mrn: "77210", refId: "ABHA-220-556", abhaId: "AB-345-678", age: 28, gender: "Female", mobile: "+1 555-0203", email: "alice.j@email.com", address: "789 Pine Ln, TX", physician: "Dr. Lee", activeTab: 'Complete', procedures: [] },
+            { id: 4, name: "Robert Brown", mrn: "66105", refId: "ABHA-330-789", abhaId: "AB-901-234", age: 55, gender: "Male", mobile: "+1 555-0304", email: "robert.b@email.com", address: "101 Elm St, FL", physician: "Dr. Adams", activeTab: 'Complete', procedures: [] }
+        ];
+
+        const templateLibrary = {
+            Standard: "REPORT: Standard Endoscopy\n\nClinical Indication: [Reason]\nFindings:\n- Esophagus: [Normal/Abnormal]\n- Stomach: [Normal/Abnormal]\n- Duodenum: [Normal/Abnormal]\n\nImpression: [Diagnosis]",
+            Colonoscopy: "REPORT: Colonoscopy Protocol\n\nPrep Quality: [Excellent/Fair/Poor]\nFindings:\n- Rectum: [Description]\n- Sigmoid: [Description]\n- Descending: [Description]\n\nPolyp Findings: [None/Found]\nRecommendation: [Routine Screening]",
+            Biopsy: "REPORT: Biopsy Path Report\n\nSpecimen Site: [Location]\nNature of Tissue: [Type]\nHistopathology:\n- Architecture: [Notes]\n- Cellularity: [Notes]\n\nDiagnostic Conclusion: [Pathologist signature needed]"
+        };
+
+        function toggleProfileMenu() { document.getElementById('profileMenu').classList.toggle('hidden'); }
+        function signout() { 
+            toggleProfileMenu();
+            document.getElementById('login-screen').classList.remove('hidden'); 
+        }
+        
+        setInterval(() => { document.getElementById('live-time').innerText = new Date().toLocaleString(); }, 1000);
+
+        function openFullScreenTemplate(type) {
+            document.getElementById('fsTemplateTitle').innerText = type + " Template";
+            document.getElementById('fsTemplateContent').innerText = templateLibrary[type] || "No content available.";
+            document.getElementById('fullScreenTemplate').classList.remove('hidden');
+        }
+
+        function closeFullScreenTemplate() { document.getElementById('fullScreenTemplate').classList.add('hidden'); }
+
+        function switchTab(tab) {
+            document.querySelectorAll('nav li').forEach(el => {
+                el.classList.remove('bg-sky-600/10', 'text-sky-400', 'border', 'border-sky-600/20');
+                el.classList.add('text-slate-400');
+            });
+            document.getElementById(`tab-${tab}`).classList.add('bg-sky-600/10', 'text-sky-400', 'border', 'border-sky-600/20');
+            document.getElementById('content-Dashboard').classList.toggle('hidden', tab !== 'Dashboard');
+            document.getElementById('content-Templates').classList.toggle('hidden', tab !== 'Templates');
+            document.getElementById('content-Medicines').classList.toggle('hidden', tab !== 'Medicines');
+        }
+
+        function renderPatients() {
+            const container = document.getElementById('patientList');
+            container.innerHTML = patients.map(p => `
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="p-5 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors" onclick="toggleDetails(${p.id})">
+                        <div class="grid grid-cols-6 gap-4 w-full items-center text-sm">
+                            <div class="font-mono font-bold text-slate-900">${p.mrn}</div>
+                            <div><p class="font-semibold text-slate-900">${p.name}</p><p class="text-[10px] text-sky-600 font-bold tracking-wider">${p.refId}</p></div>
+                            <div class="text-slate-600">${p.age} / ${p.gender.charAt(0)}</div>
+                            <div class="text-slate-600">${p.mobile}</div>
+                            <div class="text-slate-600 font-medium italic">${p.procedures[0]?.type || 'N/A'}</div>
+                            <div class="flex justify-end">
+                                <div class="slider-track w-32 h-10 rounded-full shadow-inner overflow-hidden cursor-pointer" onpointerdown="initSlide(event, ${p.id})">
+                                    <div class="absolute inset-0 flex items-center justify-center gap-0.5 text-white font-black text-[9px] opacity-40 uppercase tracking-widest pointer-events-none">
+                                        <span>>></span><span>>></span><span>>></span>
+                                    </div>
+                                    <div id="thumb-${p.id}" class="slider-thumb w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg pointer-events-none font-bold text-[9px] text-emerald-600">Start</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="details-${p.id}" class="hidden p-6 border-t border-slate-100 bg-slate-50/50">
+                        <div class="flex justify-between items-center text-sm text-slate-600 mb-8 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm px-10">
+                            <div class="flex items-center gap-3 text-slate-700">
+                                <svg class="w-5 h-5 text-sky-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                <span>${p.email}</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-slate-700">
+                                <svg class="w-5 h-5 text-sky-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                                <span>${p.abhaId}</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-slate-700">
+                                <svg class="w-5 h-5 text-sky-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                <span>${p.address}</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-slate-700">
+                                <svg class="w-5 h-5 text-sky-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                <span>${p.physician}</span>
+                            </div>
+                        </div>
+                        <div class="flex gap-3 mb-6">
+                            ${['Complete', 'Pending', 'Incomplete', 'Bin'].map(status => {
+                                const count = p.procedures.filter(pr => pr.status === status).length;
+                                const isActive = p.activeTab === status;
+                                const statusClass = isActive ? `clinical-glow-${status.toLowerCase()}` : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300';
+                                
+                                let badgeColorClass;
+                                if (status === 'Complete') badgeColorClass = 'bg-emerald-100 text-emerald-700';
+                                else if (status === 'Pending') badgeColorClass = 'bg-amber-100 text-amber-700';
+                                else if (status === 'Incomplete') badgeColorClass = 'bg-orange-100 text-orange-700';
+                                else badgeColorClass = 'bg-red-100 text-red-700';
+
+                                return `<div onclick="setTab(${p.id}, '${status}')" class="px-5 py-2.5 rounded-full text-xs font-bold transition-all flex items-center gap-3 border cursor-pointer ${statusClass}">
+                                    ${status} <span class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${badgeColorClass}">${count}</span>
+                                </div>`;
+                            }).join('')}
+                        </div>
+                        <table class="w-full text-sm">
+                            <thead class="text-[10px] text-slate-400 uppercase border-b border-slate-200">
+                                <tr><th class="pb-3 text-left">Date & Time</th><th class="pb-3 text-left">Procedure</th><th class="pb-3 text-left">Gallery</th><th class="pb-3 text-center">Report</th><th class="pb-3 text-center">Edit</th><th class="pb-3 text-center">Delete</th><th class="pb-3 text-center">Download</th></tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                ${p.procedures.filter(proc => proc.status === p.activeTab).map(proc => `
+                                    <tr>
+                                        <td class="py-4 text-slate-900 font-medium">${proc.date}</td>
+                                        <td>${proc.type}</td>
+                                        <td class="flex gap-3 py-4">
+                                            <span class="flex items-center gap-1 font-bold text-xs"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M21 15-3-3-5 5"/></svg>${proc.images}</span>
+                                            <span class="flex items-center gap-1 font-bold text-xs"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m23 7-7 5 7 5V7Z"/><rect width="15" height="14" x="1" y="5" rx="2"/></svg>${proc.videos}</span>
+                                        </td>
+                                        <td class="text-center"><button class="text-sky-600"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></button></td>
+                                        <td class="text-center"><button class="text-slate-600"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></td>
+                                        <td class="text-center"><button class="text-red-500"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td>
+                                        <td class="text-center"><button class="text-emerald-600"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></button></td>
+                                    </tr>`).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function initSlide(e, id) {
+            const track = e.target.closest('.slider-track');
+            const thumb = document.getElementById(`thumb-${id}`);
+            const max = track.offsetWidth - thumb.offsetWidth - 8;
+            function onPointerMove(moveEvent) {
+                let x = moveEvent.clientX - track.getBoundingClientRect().left - 16;
+                x = Math.max(0, Math.min(x, max));
+                thumb.style.transform = `translateX(${x}px)`;
+                if (x >= max * 0.9) {
+                    cleanup();
+                    toggleDetails(id);
+                }
+            }
+            function cleanup() {
+                document.removeEventListener('pointermove', onPointerMove);
+                document.removeEventListener('pointerup', cleanup);
+                thumb.style.transition = 'transform 0.3s ease';
+                thumb.style.transform = 'translateX(0px)';
+                setTimeout(() => thumb.style.transition = 'none', 300);
+            }
+            thumb.style.transition = 'none';
+            document.addEventListener('pointermove', onPointerMove);
+            document.addEventListener('pointerup', cleanup);
+        }
+
+        function setTab(pid, tab) { const p = patients.find(x => x.id === pid); p.activeTab = tab; renderPatients(); document.getElementById(`details-${pid}`).classList.remove('hidden'); }
+        function toggleModal(show) { document.getElementById('regModal').classList.toggle('hidden', !show); }
+        function checkClose() { document.getElementById('confirmModal').classList.remove('hidden'); }
+        function closeConfirm(discard) {
+            document.getElementById('confirmModal').classList.add('hidden');
+            if(discard) { toggleModal(false); document.getElementById('regForm').reset(); }
+        }
+        function toggleDetails(id) { document.getElementById(`details-${id}`).classList.toggle('hidden'); }
+        document.getElementById('regForm').onsubmit = (e) => { e.preventDefault(); toggleModal(false); };
+        renderPatients();
+    </script>
+</body>
+</html>
